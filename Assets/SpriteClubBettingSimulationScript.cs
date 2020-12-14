@@ -82,6 +82,7 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
 		if (!ModuleSolved)
 		{
 			Module.HandlePass();
+			ModuleSolved = true;
 		}
 	}
 	
@@ -452,7 +453,7 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
 		IterationLevel:
 		if (Iteration < 50)
 		{
-			if ((TheWinner != "#2277FF" && TheWinner != "#DD3333") || BetAmountString == "0")
+			if ((TheWinner != "#2277FF" && TheWinner != "#DD3333") || BetAmountString == "0" || YouBet == "")
 			{
 				StartCoroutine(ColorChangeText(BetAmount, BetAmount.color, new Color(128f/255f, 128f/255f, 128f/255f, 255f/255f)));
 				MatchIDTag.text = "Result";
@@ -522,8 +523,8 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
 		else
 		{
 			MatchIDTag.text = "Result";
-			StartCoroutine(ColorChangeText(BetAmount, BetAmount.color, new Color(128f/255f, 128f/255f, 128f/255f, 255f/255f)));
 			BetAmount.text = "ERROR";
+			StartCoroutine(ColorChangeText(BetAmount, BetAmount.color, new Color(128f/255f, 128f/255f, 128f/255f, 255f/255f)));
 			yield return new WaitForSecondsRealtime(5f);
 			while (!AbleToTransition)
 			{
@@ -538,11 +539,13 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
 	
 	void GeneralWork()
 	{
-		BetAmount.color = new Color(255/255f, 255/255f, 255/255f, 0f/255f);
 		BetAmount.text = "$0";
+		YouBet = "";
+		BetAmountString = "0";
 		Audio.PlaySoundAtTransform(SFX[0].name, transform);
 		MatchIDTag.text = "Input Pending";
 		Comparer = (Int32.Parse(MatchID) + 1).ToString();
+		BetAmount.color = new Color(255/255f, 255/255f, 255/255f, 0f/255f);
 		StartCoroutine(ColorChangeRenderer(TwoButtons[0], TwoButtons[0].material.color, new Color(34f/255f, 119f/255f, 255f/255f)));
 		StartCoroutine(ColorChangeRenderer(TwoButtons[1], TwoButtons[1].material.color, new Color(221f/255f, 51f/255f, 51f/255f)));
 		StartCoroutine(ColorChangeSprite(TwoButtonImages[0], TwoButtons[1].material.color, new Color(255f/255f, 255f/255f, 255f/255f, 255f/255f)));
@@ -550,8 +553,6 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
 		StartCoroutine(ColorChangeText(BetAmount, BetAmount.color, new Color(255f/255f, 255f/255f, 255f/255f, 255f/255f)));
 		AbleToInput = true;
 		StartCoroutine(Timer());
-		YouBet = "";
-		BetAmountString = "0";
 	}
 	
 	IEnumerator Timer()
