@@ -5,8 +5,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
-using KModkit;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
 public class SpriteClubBettingSimulationScript : MonoBehaviour
@@ -604,7 +602,6 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
         display.material.color = endColor;
 	}
 	
-	
 	IEnumerator ColorChangeRenderer(MeshRenderer display, Color startColor, Color endColor)
     {
         var elapsed = 0f;
@@ -617,4 +614,111 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
         }
         display.material.color = endColor;
     }
+
+	//twitch plays
+	#pragma warning disable 414
+	private readonly string TwitchHelpMessage = @"!{0} press <solve/reset> [Presses the ""Solve"" or ""Reset"" button] | !{0} bet <amt> [Type the specified bet amount] | !{0} team <red/blue> [Bets on the specified team]";
+	#pragma warning restore 414
+	IEnumerator ProcessTwitchCommand(string command)
+	{
+		string[] parameters = command.Split(' ');
+		if (Regex.IsMatch(parameters[0], @"^\s*press\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+		{
+			yield return null;
+			if (parameters.Length > 2)
+			{
+				yield return "sendtochaterror Too many parameters!";
+			}
+			else if (parameters.Length == 2)
+			{
+				if (parameters[1].EqualsIgnoreCase("solve"))
+					SolveButton.OnInteract();
+				else if (parameters[1].EqualsIgnoreCase("reset"))
+                {
+					if (!AbleToInput)
+						yield return "sendtochaterror The module is not in \"Input Pending\" mode!";
+					else
+						ResetButton.OnInteract();
+                }
+                else
+                {
+					yield return "sendtochaterror!f The specified button '" + parameters[1] + "' is invalid!";
+				}
+			}
+			else if (parameters.Length == 1)
+			{
+				yield return "sendtochaterror Please specify a button to press!";
+			}
+			yield break;
+		}
+		if (Regex.IsMatch(parameters[0], @"^\s*bet\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+		{
+			yield return null;
+			if (parameters.Length > 2)
+			{
+				yield return "sendtochaterror Too many parameters!";
+			}
+			else if (parameters.Length == 2)
+			{
+				string bet = parameters[1];
+				if (parameters[1].StartsWith("$") && parameters[1].Count(x => x == '$') == 1)
+					bet = parameters[1].Replace("$", "");
+				char[] nums = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+				for (int i = 0; i < bet.Length; i++)
+                {
+					if (!nums.Contains(bet[i]))
+                    {
+						yield return "sendtochaterror!f The specified bet amount '" + parameters[1] + "' is invalid!";
+						yield break;
+                    }
+                }
+				if (!AbleToInput)
+					yield return "sendtochaterror The module is not in \"Input Pending\" mode!";
+                else
+                {
+					for (int i = 0; i < bet.Length; i++)
+					{
+						NumberButtons[int.Parse(bet[i].ToString())].OnInteract();
+						yield return new WaitForSecondsRealtime(.1f);
+					}
+				}
+			}
+			else if (parameters.Length == 1)
+			{
+				yield return "sendtochaterror Please specify a bet amount to type!";
+			}
+			yield break;
+		}
+		if (Regex.IsMatch(parameters[0], @"^\s*team\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+		{
+			yield return null;
+			if (parameters.Length > 2)
+			{
+				yield return "sendtochaterror Too many parameters!";
+			}
+			else if (parameters.Length == 2)
+			{
+				if (!parameters[1].ToLowerInvariant().EqualsAny("red", "blue"))
+					yield return "sendtochaterror!f The specified team '" + parameters[1] + "' is invalid!";
+				else
+				{
+					if (!AbleToInput)
+						yield return "sendtochaterror The module is not in \"Input Pending\" mode!";
+					else
+						SelectableButtons[parameters[1].ToLowerInvariant().Equals("blue") ? 0 : 1].OnInteract();
+				}
+			}
+			else if (parameters.Length == 1)
+			{
+				yield return "sendtochaterror Please specify a team to bet on!";
+			}
+		}
+	}
+
+	IEnumerator TwitchHandleForcedSolve()
+    {
+		while (!TheAccount.activeSelf) yield return true;
+		SolveButton.OnInteract();
+		yield return new WaitForSeconds(0.1f);
+	}
 }
