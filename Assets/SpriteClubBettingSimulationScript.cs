@@ -632,7 +632,12 @@ public class SpriteClubBettingSimulationScript : MonoBehaviour
 			else if (parameters.Length == 2)
 			{
 				if (parameters[1].EqualsIgnoreCase("solve"))
-					SolveButton.OnInteract();
+				{
+					if (!TheAccount.activeSelf)
+						yield return "sendtochaterror The module must finish startup first!";
+					else
+						SolveButton.OnInteract();
+				}
 				else if (parameters[1].EqualsIgnoreCase("reset"))
                 {
 					if (!AbleToInput)
